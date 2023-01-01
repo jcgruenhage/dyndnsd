@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.1] - 2023-01-01
+
+### Bug Fixes
+
+- Make container image actually usable
+
+### Miscellaneous Tasks
+
+- Improve logging granularity
+- Bump version and update changelog
+
 ## [0.5.0] - 2023-01-01
 
 ### Bug Fixes
