@@ -1,3 +1,14 @@
+// Copyright (C) 2021, 2023 Jan Christian Grünhage <jan.christian@gruenhage.xyz>
+//
+// This file is part of cloudflare-ddns-service.
+//
+// cloudflare-ddns-service is non-violent software: you can use, redistribute, and/or modify it
+// under the terms of the CNPLv7+ as found in the LICENSE.md file in the source code root directory
+// or at <https://git.pixie.town/thufie/npl-builder>.
+//
+// cloudflare-ddns-service comes with ABSOLUTELY NO WARRANTY, to the extent permitted by applicable
+// law. See the LICENSE.md for details.
+
 mod network;
 
 use anyhow::{Context, Result};

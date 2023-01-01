@@ -60,14 +60,14 @@ Please make sure to update tests as appropriate.
 ## License
 
 cloudflare-ddns-service is cooperative non-violent software: you can use,
-redistribute, and/or modify it under the terms of the CNPLv6+ as found in the
-LICENSE file in the source code root directory or at
-<https://git.pixie.town/thufie/CNPL>.
+redistribute, and/or modify it under the terms of the CNPLv7+ as found in the
+`LICENSE.md` file in the source code root directory or at
+<https://git.pixie.town/thufie/npl-builder>.
 
 cloudflare-ddns-service comes with ABSOLUTELY NO WARRANTY, to the extent
-permitted by applicable law.  See `LICENSE` for details.
+permitted by applicable law.  See `LICENSE.md` for details.
 
-[CNPLv6+](https://thufie.lain.haus/NPL.html)
+[CNPLv7+](https://thufie.lain.haus/NPL.html)
 
 ## Attribution
 
