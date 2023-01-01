@@ -16,9 +16,8 @@ cargo install cloudflare-ddns-service
 ## Usage
 ### Config
 
-The services adheres to the XDG spec for locating the config file. In most
-cases, that means the config file is located at
-`~/.config/cloudflare-ddns-service/config.yaml`.
+`cloudflare-ddns-service` expects to find a config file at
+`/etc/cloudflare-ddns-service/config.yml`.
 
 As you can see from the path, the configuration should be a yaml file. A sample
 could look like this:

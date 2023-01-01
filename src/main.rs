@@ -1,7 +1,6 @@
 mod network;
 
 use anyhow::{Context, Result};
-use directories_next::ProjectDirs;
 use network::{get_current_ipv4, get_current_ipv6, get_record, get_zone, update_record};
 use serde::{Deserialize, Serialize};
 use serde_yaml::{from_str, to_writer};
@@ -44,16 +43,15 @@ struct Cache {
 async fn main() -> Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
-    let dirs = ProjectDirs::from("re", "jcg", "cloudflare-ddns-service")
-        .context("Couldn't find project directories! Is $HOME set?")?;
-    let config_string = read_to_string(dirs.config_dir().join("config.yaml"))
+    let config_string = read_to_string("/etc/cloudflare-ddns-service/config.yaml")
         .context("couldn't read config file!")?;
     let config: Config = from_str(&config_string)?;
-    let cache_path = dirs.cache_dir().join("cache.yaml");
+    let cache_dir = PathBuf::from("/var/cache/cloudflare-ddns-service");
+    let cache_path = cache_dir.join("cache.yaml");
     let mut cache = match read_to_string(&cache_path) {
         Ok(cache) => from_str(&cache)?,
         Err(_) => {
-            create_dir_all(dirs.cache_dir())?;
+            create_dir_all(cache_dir)?;
             Cache::default()
         }
     };
