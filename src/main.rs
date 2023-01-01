@@ -107,7 +107,7 @@ async fn update(
                 log::debug!("ipv4 unchanged, continuing...");
             }
             _ => {
-                log::debug!("ipv4 changed, setting record");
+                log::info!("ipv4 changed, setting record");
                 let rid = get_record(zone, config.domain.clone(), network::A_RECORD, cf_client)
                     .await
                     .context("couldn't find record!")?;
@@ -133,7 +133,7 @@ async fn update(
                 log::debug!("ipv6 unchanged, continuing...")
             }
             _ => {
-                log::debug!("ipv4 changed, setting record");
+                log::info!("ipv6 changed, setting record");
                 let rid = get_record(zone, config.domain.clone(), network::AAAA_RECORD, cf_client)
                     .await
                     .context("couldn't find record!")?;
