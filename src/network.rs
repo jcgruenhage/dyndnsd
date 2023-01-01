@@ -85,11 +85,7 @@ pub async fn get_record(
         .result
         .iter()
         .find(|record| {
-            if std::mem::discriminant(&record.content) == std::mem::discriminant(&r#type) {
-                true
-            } else {
-                false
-            }
+            std::mem::discriminant(&record.content) == std::mem::discriminant(&r#type)
         })
         .context("No matching record found")?
         .id
