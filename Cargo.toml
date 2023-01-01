@@ -13,12 +13,12 @@ documentation = "https://git.jcg.re/jcgruenhage/cloudflare-ddns-service"
 readme = "README.md"
 
 [dependencies]
-reqwest= { version = "0.11.3", features = ["blocking", "json"] }
-serde = { version = "1.0.126", features = ["derive"] }
-anyhow = "1.0.40"
-env_logger = "0.8.3"
-log = "0.4.14"
+reqwest= { version = "0.11.13", features = ["blocking", "json"] }
+serde = { version = "1.0.152", features = ["derive"] }
+anyhow = "1.0.68"
+env_logger = "0.10.0"
+log = "0.4.17"
 directories-next = "2.0.0"
-tokio = { version = "1.6.0", features = ["time", "macros", "rt-multi-thread"] }
-serde_yaml = "0.8.17"
-cloudflare = "0.8.2"
+tokio = { version = "1.23.0", features = ["time", "macros", "rt-multi-thread"] }
+serde_yaml = "0.9.16"
+cloudflare = "0.10.1"
