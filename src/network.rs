@@ -35,22 +35,28 @@ pub async fn get_current_ipv4(client: &mut ReqwClient) -> Result<Ipv4Addr> {
     Ok(client
         .get("https://ipv4.icanhazip.com")
         .send()
-        .await?
+        .await
+        .context("Failed to query current IPv4 from ipv4.icanhazip.com")?
         .text()
-        .await?
+        .await
+        .context("Failed to read text body")?
         .trim()
-        .parse()?)
+        .parse()
+        .context("Failed to parse IPv4 address returned by ipv4.icanhazip.com")?)
 }
 
 pub async fn get_current_ipv6(client: &mut ReqwClient) -> Result<Ipv6Addr> {
     Ok(client
         .get("https://ipv6.icanhazip.com")
         .send()
-        .await?
+        .await
+        .context("Failed to query current IPv6 from ipv6.icanhazip.com")?
         .text()
-        .await?
+        .await
+        .context("Failed to read text body")?
         .trim()
-        .parse()?)
+        .parse()
+        .context("Failed to parse IPv6 address returned by ipv6.icanhazip.com")?)
 }
 
 pub async fn get_zone(domain: String, cf_client: &mut CfClient) -> Result<String> {
@@ -66,7 +72,8 @@ pub async fn get_zone(domain: String, cf_client: &mut CfClient) -> Result<String
                 search_match: None,
             },
         })
-        .await?
+        .await
+        .context("Failed to query zone from cf_client")?
         .result[0]
         .id
         .clone())
@@ -95,9 +102,7 @@ pub async fn get_record(
         .context("Couldn't fetch record")?
         .result
         .iter()
-        .find(|record| {
-            std::mem::discriminant(&record.content) == std::mem::discriminant(&r#type)
-        })
+        .find(|record| std::mem::discriminant(&record.content) == std::mem::discriminant(&r#type))
         .context("No matching record found")?
         .id
         .clone())

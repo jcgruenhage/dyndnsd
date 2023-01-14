@@ -56,12 +56,12 @@ async fn main() -> Result<()> {
 
     let config_string = read_to_string("/etc/cloudflare-ddns-service/config.yaml")
         .context("couldn't read config file!")?;
-    let config: Config = from_str(&config_string)?;
+    let config: Config = from_str(&config_string).context("Failed to parse config file")?;
     let cache_dir = PathBuf::from("/var/cache/cloudflare-ddns-service");
     let cache_path = cache_dir.join("cache.yaml");
-    let mut cache = match read_to_string(&cache_path) {
-        Ok(cache) => from_str(&cache)?,
-        Err(_) => {
+    let mut cache = match read_to_string(&cache_path).map(|str| from_str(&str)) {
+        Ok(Ok(cache)) => cache,
+        _ => {
             create_dir_all(cache_dir)?;
             Cache::default()
         }
@@ -75,10 +75,13 @@ async fn main() -> Result<()> {
         },
         HttpApiClientConfig::default(),
         Environment::Production,
-    )?;
-    let zone = get_zone(config.zone.clone(), &mut cf_client).await?;
+    )
+    .context("Failed to initiate cloudflare API client")?;
+    let zone = get_zone(config.zone.clone(), &mut cf_client)
+        .await
+        .context("Failed to get zone")?;
     loop {
-        update(
+        if let Err(error) = update(
             &config,
             &mut cache,
             &cache_path,
@@ -86,7 +89,10 @@ async fn main() -> Result<()> {
             &mut reqw_client,
             &mut cf_client,
         )
-        .await?;
+        .await
+        {
+            log::error!("Failed to update record: {}", error);
+        }
         interval.tick().await;
     }
 }
@@ -100,7 +106,9 @@ async fn update(
     cf_client: &mut CfClient,
 ) -> Result<()> {
     if config.ipv4 {
-        let current = get_current_ipv4(reqw_client).await?;
+        let current = get_current_ipv4(reqw_client)
+            .await
+            .context("Failed to query current IPv4 address")?;
         log::debug!("fetched current IP: {}", current.to_string());
         match cache.v4 {
             Some(old) if old == current => {
@@ -119,14 +127,18 @@ async fn update(
                     DnsContent::A { content: current },
                     cf_client,
                 )
-                .await?;
+                .await
+                .context("Failed to set DNS record")?;
                 cache.v4 = Some(current);
-                write_cache(cache, cache_path)?;
+                write_cache(cache, cache_path)
+                    .context("Failed to write current IPv4 address to cache")?;
             }
         }
     }
     if config.ipv6 {
-        let current = get_current_ipv6(reqw_client).await?;
+        let current = get_current_ipv6(reqw_client)
+            .await
+            .context("Failed to query current IPv4 address")?;
         log::debug!("fetched current IP: {}", current.to_string());
         match cache.v6 {
             Some(old) if old == current => {
@@ -145,9 +157,11 @@ async fn update(
                     DnsContent::AAAA { content: current },
                     cf_client,
                 )
-                .await?;
+                .await
+                .context("Failed to set DNS record")?;
                 cache.v6 = Some(current);
-                write_cache(cache, cache_path)?;
+                write_cache(cache, cache_path)
+                    .context("Failed to write current IPv4 address to cache")?;
             }
         }
     }
@@ -155,7 +169,11 @@ async fn update(
 }
 
 fn write_cache(cache: &mut Cache, cache_path: &PathBuf) -> Result<()> {
-    to_writer(File::create(cache_path)?, cache)?;
+    to_writer(
+        File::create(cache_path).context("Failed to open cache file for writing")?,
+        cache,
+    )
+    .context("Failed to serialize cache into file")?;
     Ok(())
 }
 
