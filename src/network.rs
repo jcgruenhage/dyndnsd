@@ -32,7 +32,7 @@ pub const AAAA_RECORD: DnsContent = DnsContent::AAAA {
 };
 
 pub async fn get_current_ipv4(client: &mut ReqwClient) -> Result<Ipv4Addr> {
-    Ok(client
+    client
         .get("https://ipv4.icanhazip.com")
         .send()
         .await
@@ -42,11 +42,11 @@ pub async fn get_current_ipv4(client: &mut ReqwClient) -> Result<Ipv4Addr> {
         .context("Failed to read text body")?
         .trim()
         .parse()
-        .context("Failed to parse IPv4 address returned by ipv4.icanhazip.com")?)
+        .context("Failed to parse IPv4 address returned by ipv4.icanhazip.com")
 }
 
 pub async fn get_current_ipv6(client: &mut ReqwClient) -> Result<Ipv6Addr> {
-    Ok(client
+    client
         .get("https://ipv6.icanhazip.com")
         .send()
         .await
@@ -56,7 +56,7 @@ pub async fn get_current_ipv6(client: &mut ReqwClient) -> Result<Ipv6Addr> {
         .context("Failed to read text body")?
         .trim()
         .parse()
-        .context("Failed to parse IPv6 address returned by ipv6.icanhazip.com")?)
+        .context("Failed to parse IPv6 address returned by ipv6.icanhazip.com")
 }
 
 pub async fn get_zone(domain: String, cf_client: &mut CfClient) -> Result<String> {
