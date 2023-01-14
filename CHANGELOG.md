@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.2] - 2023-01-14
+
+### Bug Fixes
+
+- Switch to cloudflare fork that actually parses API responses
+
+### Miscellaneous Tasks
+
+- Improve error handling
+- Fix clippy lints
+- Bump version and update changelog
+
 ## [0.5.1] - 2023-01-01
 
 ### Bug Fixes

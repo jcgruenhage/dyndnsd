@@ -1,6 +1,6 @@
 [package]
 name = "cloudflare-ddns-service"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["Jan Christian Grünhage <jan.christian@gruenhage.xyz>"]
 edition = "2018"
 description = "A daemon to use Cloudflare as a DDNS provider"
