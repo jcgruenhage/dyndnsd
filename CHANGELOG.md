@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.3] - 2023-01-15
+
+### Miscellaneous Tasks
+
+- Replace homegrown public IP lookup with library
+- Update dependencies
+- Bump version and update changelog
+
 ## [0.5.2] - 2023-01-14
 
 ### Bug Fixes

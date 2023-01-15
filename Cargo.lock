@@ -118,7 +118,7 @@ dependencies = [
 
 [[package]]
 name = "cloudflare-ddns-service"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "anyhow",
  "cloudflare",
