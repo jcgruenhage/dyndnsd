@@ -12,7 +12,7 @@
 mod network;
 
 use anyhow::{Context, Result};
-use network::{get_current_ipv4, get_current_ipv6, get_record, get_zone, update_record};
+use network::{get_record, get_zone, update_record};
 use serde::{Deserialize, Serialize};
 use serde_yaml::{from_str, to_writer};
 use std::{
@@ -25,11 +25,8 @@ use tokio::time::interval;
 
 use cloudflare::{
     endpoints::dns::DnsContent,
-    framework::{
-        async_api::Client as CfClient, auth::Credentials, Environment, HttpApiClientConfig,
-    },
+    framework::{async_api::Client, auth::Credentials, Environment, HttpApiClientConfig},
 };
-use reqwest::Client as ReqwClient;
 
 #[derive(Serialize, Deserialize)]
 struct Config {
@@ -68,8 +65,7 @@ async fn main() -> Result<()> {
     };
 
     let mut interval = interval(Duration::new(config.interval, 0));
-    let mut reqw_client = ReqwClient::new();
-    let mut cf_client = CfClient::new(
+    let mut client = Client::new(
         Credentials::UserAuthToken {
             token: config.api_token.clone(),
         },
@@ -77,20 +73,11 @@ async fn main() -> Result<()> {
         Environment::Production,
     )
     .context("Failed to initiate cloudflare API client")?;
-    let zone = get_zone(config.zone.clone(), &mut cf_client)
+    let zone = get_zone(config.zone.clone(), &mut client)
         .await
         .context("Failed to get zone")?;
     loop {
-        if let Err(error) = update(
-            &config,
-            &mut cache,
-            &cache_path,
-            &zone,
-            &mut reqw_client,
-            &mut cf_client,
-        )
-        .await
-        {
+        if let Err(error) = update(&config, &mut cache, &cache_path, &zone, &mut client).await {
             log::error!("Failed to update record: {}", error);
         }
         interval.tick().await;
@@ -102,11 +89,10 @@ async fn update(
     cache: &mut Cache,
     cache_path: &PathBuf,
     zone: &str,
-    reqw_client: &mut ReqwClient,
-    cf_client: &mut CfClient,
+    client: &mut Client,
 ) -> Result<()> {
     if config.ipv4 {
-        let current = get_current_ipv4(reqw_client)
+        let current = public_ip::addr_v4()
             .await
             .context("Failed to query current IPv4 address")?;
         log::debug!("fetched current IP: {}", current.to_string());
@@ -116,7 +102,7 @@ async fn update(
             }
             _ => {
                 log::info!("ipv4 changed, setting record");
-                let rid = get_record(zone, config.domain.clone(), network::A_RECORD, cf_client)
+                let rid = get_record(zone, config.domain.clone(), network::A_RECORD, client)
                     .await
                     .context("couldn't find record!")?;
                 log::debug!("got record ID {}", rid);
@@ -125,7 +111,7 @@ async fn update(
                     &rid,
                     &config.domain,
                     DnsContent::A { content: current },
-                    cf_client,
+                    client,
                 )
                 .await
                 .context("Failed to set DNS record")?;
@@ -136,7 +122,7 @@ async fn update(
         }
     }
     if config.ipv6 {
-        let current = get_current_ipv6(reqw_client)
+        let current = public_ip::addr_v6()
             .await
             .context("Failed to query current IPv4 address")?;
         log::debug!("fetched current IP: {}", current.to_string());
@@ -146,7 +132,7 @@ async fn update(
             }
             _ => {
                 log::info!("ipv6 changed, setting record");
-                let rid = get_record(zone, config.domain.clone(), network::AAAA_RECORD, cf_client)
+                let rid = get_record(zone, config.domain.clone(), network::AAAA_RECORD, client)
                     .await
                     .context("couldn't find record!")?;
                 log::debug!("got record ID {}", rid);
@@ -155,7 +141,7 @@ async fn update(
                     &rid,
                     &config.domain,
                     DnsContent::AAAA { content: current },
-                    cf_client,
+                    client,
                 )
                 .await
                 .context("Failed to set DNS record")?;

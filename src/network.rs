@@ -20,9 +20,8 @@ use cloudflare::{
         },
         zone::{ListZones, ListZonesParams},
     },
-    framework::async_api::Client as CfClient,
+    framework::async_api::Client,
 };
-use reqwest::Client as ReqwClient;
 
 pub const A_RECORD: DnsContent = DnsContent::A {
     content: Ipv4Addr::UNSPECIFIED,
@@ -31,36 +30,8 @@ pub const AAAA_RECORD: DnsContent = DnsContent::AAAA {
     content: Ipv6Addr::UNSPECIFIED,
 };
 
-pub async fn get_current_ipv4(client: &mut ReqwClient) -> Result<Ipv4Addr> {
-    client
-        .get("https://ipv4.icanhazip.com")
-        .send()
-        .await
-        .context("Failed to query current IPv4 from ipv4.icanhazip.com")?
-        .text()
-        .await
-        .context("Failed to read text body")?
-        .trim()
-        .parse()
-        .context("Failed to parse IPv4 address returned by ipv4.icanhazip.com")
-}
-
-pub async fn get_current_ipv6(client: &mut ReqwClient) -> Result<Ipv6Addr> {
-    client
-        .get("https://ipv6.icanhazip.com")
-        .send()
-        .await
-        .context("Failed to query current IPv6 from ipv6.icanhazip.com")?
-        .text()
-        .await
-        .context("Failed to read text body")?
-        .trim()
-        .parse()
-        .context("Failed to parse IPv6 address returned by ipv6.icanhazip.com")
-}
-
-pub async fn get_zone(domain: String, cf_client: &mut CfClient) -> Result<String> {
-    Ok(cf_client
+pub async fn get_zone(domain: String, client: &mut Client) -> Result<String> {
+    Ok(client
         .request_handle(&ListZones {
             params: ListZonesParams {
                 name: Some(domain),
@@ -83,9 +54,9 @@ pub async fn get_record(
     zone_identifier: &str,
     domain: String,
     r#type: DnsContent,
-    cf_client: &mut CfClient,
+    client: &mut Client,
 ) -> Result<String> {
-    Ok(cf_client
+    Ok(client
         .request_handle(&ListDnsRecords {
             zone_identifier,
             params: ListDnsRecordsParams {
@@ -113,9 +84,9 @@ pub async fn update_record(
     identifier: &str,
     name: &str,
     content: DnsContent,
-    cf_client: &mut CfClient,
+    client: &mut Client,
 ) -> Result<()> {
-    cf_client
+    client
         .request_handle(&UpdateDnsRecord {
             zone_identifier,
             identifier,

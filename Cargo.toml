@@ -13,7 +13,6 @@ documentation = "https://git.jcg.re/jcgruenhage/cloudflare-ddns-service"
 readme = "README.md"
 
 [dependencies]
-reqwest= { version = "0.11.13", features = ["blocking", "json"] }
 serde = { version = "1.0.152", features = ["derive"] }
 anyhow = "1.0.68"
 env_logger = "0.10.0"
@@ -22,3 +21,4 @@ tokio = { version = "1.24.1", features = ["time", "macros", "rt-multi-thread"] }
 serde_yaml = "0.9.16"
 #cloudflare = "0.10.1"
 cloudflare = { git = "https://github.com/jcgruenhage/cloudflare-rs.git", branch = "make-owner-fields-optional" }
+public-ip = "0.2.2"
