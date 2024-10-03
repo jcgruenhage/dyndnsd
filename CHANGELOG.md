@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.4] - 2024-10-14
+
+### Miscellaneous Tasks
+
+- Add hook for automatic changelog generation
+
 ## [0.5.3] - 2023-01-15
 
 ### Miscellaneous Tasks
