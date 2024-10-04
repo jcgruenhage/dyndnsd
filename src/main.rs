@@ -9,10 +9,8 @@
 // cloudflare-ddns-service comes with ABSOLUTELY NO WARRANTY, to the extent permitted by applicable
 // law. See the LICENSE.md for details.
 
-mod network;
-
-use anyhow::{Context, Result};
-use network::{get_record, get_zone, update_record};
+use anyhow::{bail, Context, Result};
+use dns_update::{DnsRecord, DnsUpdater};
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 use toml::{from_str, to_string};
@@ -23,11 +21,6 @@ use std::{
     net::{Ipv4Addr, Ipv6Addr},
     path::PathBuf,
     time::Duration,
-};
-
-use cloudflare::{
-    endpoints::dns::DnsContent,
-    framework::{async_api::Client, auth::Credentials, Environment, HttpApiClientConfig},
 };
 
 #[derive(Serialize, Deserialize)]
@@ -67,19 +60,11 @@ async fn main() -> Result<()> {
     };
 
     let mut interval = interval(Duration::new(config.interval, 0));
-    let mut client = Client::new(
-        Credentials::UserAuthToken {
-            token: config.api_token.clone(),
-        },
-        HttpApiClientConfig::default(),
-        Environment::Production,
-    )
-    .context("Failed to initiate cloudflare API client")?;
-    let zone = get_zone(config.zone.clone(), &mut client)
-        .await
-        .context("Failed to get zone")?;
+    let mut dns_updater =
+        DnsUpdater::new_cloudflare(&config.api_token, Option::<String>::None, None)
+            .context("Failed to initiate cloudflare API client")?;
     loop {
-        if let Err(error) = update(&config, &mut cache, &cache_path, &zone, &mut client).await {
+        if let Err(error) = update(&config, &mut cache, &cache_path, &mut dns_updater).await {
             log::error!("Failed to update record: {}", error);
         }
         interval.tick().await;
@@ -90,36 +75,29 @@ async fn update(
     config: &Config,
     cache: &mut Cache,
     cache_path: &PathBuf,
-    zone: &str,
-    client: &mut Client,
+    dns_updater: &mut DnsUpdater,
 ) -> Result<()> {
+    let mut records = Vec::new();
+    let mut update_required = false;
+
     if config.ipv4 {
         let current = public_ip::addr_v4()
             .await
             .context("Failed to query current IPv4 address")?;
         log::debug!("fetched current IP: {}", current.to_string());
+        records.push((
+            &config.domain,
+            DnsRecord::A { content: current },
+            300,
+            &config.zone,
+        ));
         match cache.v4 {
             Some(old) if old == current => {
                 log::debug!("ipv4 unchanged, continuing...");
             }
             _ => {
                 log::info!("ipv4 changed, setting record");
-                let rid = get_record(zone, config.domain.clone(), network::A_RECORD, client)
-                    .await
-                    .context("couldn't find record!")?;
-                log::debug!("got record ID {}", rid);
-                update_record(
-                    zone,
-                    &rid,
-                    &config.domain,
-                    DnsContent::A { content: current },
-                    client,
-                )
-                .await
-                .context("Failed to set DNS record")?;
-                cache.v4 = Some(current);
-                write_cache(cache, cache_path)
-                    .context("Failed to write current IPv4 address to cache")?;
+                update_required = true;
             }
         }
     }
@@ -128,28 +106,46 @@ async fn update(
             .await
             .context("Failed to query current IPv4 address")?;
         log::debug!("fetched current IP: {}", current.to_string());
+        records.push((
+            &config.domain,
+            DnsRecord::AAAA { content: current },
+            300,
+            &config.zone,
+        ));
         match cache.v6 {
             Some(old) if old == current => {
                 log::debug!("ipv6 unchanged, continuing...")
             }
             _ => {
                 log::info!("ipv6 changed, setting record");
-                let rid = get_record(zone, config.domain.clone(), network::AAAA_RECORD, client)
-                    .await
-                    .context("couldn't find record!")?;
-                log::debug!("got record ID {}", rid);
-                update_record(
-                    zone,
-                    &rid,
-                    &config.domain,
-                    DnsContent::AAAA { content: current },
-                    client,
-                )
-                .await
-                .context("Failed to set DNS record")?;
-                cache.v6 = Some(current);
-                write_cache(cache, cache_path)
-                    .context("Failed to write current IPv4 address to cache")?;
+                update_required = true;
+            }
+        }
+
+        if update_required {
+            dns_updater.delete(&config.domain, &config.zone).await?;
+            for record in records {
+                let cloned_record = match record.1 {
+                    DnsRecord::A { content } => DnsRecord::A { content },
+                    DnsRecord::AAAA { content } => DnsRecord::AAAA { content },
+                    _ => bail!("This code should be unreachable"),
+                };
+                dns_updater
+                    .create(record.0, record.1, record.2, record.3)
+                    .await?;
+                match cloned_record {
+                    DnsRecord::A { content } => {
+                        cache.v4 = Some(content);
+                        write_cache(cache, cache_path)
+                            .context("Failed to write current IPv4 address to cache")?;
+                    }
+                    DnsRecord::AAAA { content } => {
+                        cache.v6 = Some(content);
+                        write_cache(cache, cache_path)
+                            .context("Failed to write current IPv4 address to cache")?;
+                    }
+                    _ => {}
+                };
             }
         }
     }

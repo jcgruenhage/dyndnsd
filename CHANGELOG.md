@@ -13,6 +13,10 @@ All notable changes to this project will be documented in this file.
 - Add hook for automatic changelog generation
 - Clean up and bump dependencies
 
+### Refactor
+
+- Replace cloudflare crate with dns-update
+
 ## [0.5.3] - 2023-01-15
 
 ### Miscellaneous Tasks

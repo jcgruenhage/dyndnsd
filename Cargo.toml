@@ -14,7 +14,7 @@ readme = "README.md"
 
 [dependencies]
 anyhow = "1"
-cloudflare = "0.10"
+dns-update = "0.1"
 env_logger = "0.11"
 log = "0.4"
 public-ip = "0.2"
@@ -23,5 +23,5 @@ tokio = { version = "1", features = ["time", "macros", "rt-multi-thread"] }
 toml = "0.8.19"
 
 [patch.crates-io]
-cloudflare = { git = "https://github.com/jcgruenhage/cloudflare-rs.git", branch = "make-owner-fields-optional" }
+dns-update = { git = "https://github.com/jcgruenhage/dns-update.git", branch = "derive-error"}
 public-ip = { git = "https://github.com/jcgruenhage/rust-public-ip.git", branch = "main" }
