@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Features
 
 - [**breaking**] Use toml for config and cache files
+- [**breaking**] Support multiple dns providers and rename the project accordingly
 
 ### Miscellaneous Tasks
 

@@ -1,15 +1,15 @@
 [package]
-name = "cloudflare-ddns-service"
+name = "dyndnsd"
 version = "0.5.3"
 authors = ["Jan Christian Grünhage <jan.christian@gruenhage.xyz>"]
-edition = "2018"
-description = "A daemon to use Cloudflare as a DDNS provider"
-repository = "https://git.jcg.re/jcgruenhage/cloudflare-ddns-service"
-homepage = "https://git.jcg.re/jcgruenhage/cloudflare-ddns-service"
-keywords = ["cloudflare", "ddns"]
+edition = "2021"
+description = "A daemon for dynamically updating DNS via multiple DNS providers"
+repository = "https://git.jcg.re/jcgruenhage/dyndnsd"
+homepage = "https://git.jcg.re/jcgruenhage/dyndnsd"
+keywords = ["rfc2136", "cloudflare", "ddns"]
 categories = ["command-line-utilities"]
 license-file = "LICENSE"
-documentation = "https://git.jcg.re/jcgruenhage/cloudflare-ddns-service"
+documentation = "https://git.jcg.re/jcgruenhage/dyndnsd"
 readme = "README.md"
 
 [dependencies]
@@ -23,5 +23,7 @@ tokio = { version = "1", features = ["time", "macros", "rt-multi-thread"] }
 toml = "0.8.19"
 
 [patch.crates-io]
-dns-update = { git = "https://github.com/jcgruenhage/dns-update.git", branch = "derive-error"}
+dns-update = { git = "https://github.com/jcgruenhage/dns-update.git", branch = "fork"}
 public-ip = { git = "https://github.com/jcgruenhage/rust-public-ip.git", branch = "main" }
+hickory-client = { git = "https://github.com/jcgruenhage/hickory-dns.git", branch = "serde_tsig_algorithm_names" }
+hickory-proto = { git = "https://github.com/jcgruenhage/hickory-dns.git", branch = "serde_tsig_algorithm_names" }

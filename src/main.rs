@@ -1,16 +1,16 @@
-// Copyright (C) 2021, 2023 Jan Christian Grünhage <jan.christian@gruenhage.xyz>
+// Copyright (C) 2021-2024 Jan Christian Grünhage <jan.christian@gruenhage.xyz>
 //
-// This file is part of cloudflare-ddns-service.
+// This file is part of dyndnsd.
 //
-// cloudflare-ddns-service is non-violent software: you can use, redistribute, and/or modify it
+// dyndnsd is non-violent software: you can use, redistribute, and/or modify it
 // under the terms of the CNPLv7+ as found in the LICENSE.md file in the source code root directory
 // or at <https://git.pixie.town/thufie/npl-builder>.
 //
-// cloudflare-ddns-service comes with ABSOLUTELY NO WARRANTY, to the extent permitted by applicable
+// dyndnsd comes with ABSOLUTELY NO WARRANTY, to the extent permitted by applicable
 // law. See the LICENSE.md for details.
 
 use anyhow::{bail, Context, Result};
-use dns_update::{DnsRecord, DnsUpdater};
+use dns_update::{DnsRecord, DnsUpdater, DnsUpdaterConfig};
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 use toml::{from_str, to_string};
@@ -25,7 +25,7 @@ use std::{
 
 #[derive(Serialize, Deserialize)]
 struct Config {
-    api_token: String,
+    dns_provider_config: DnsUpdaterConfig,
     zone: String,
     domain: String,
     #[serde(default = "yes")]
@@ -46,10 +46,10 @@ struct Cache {
 async fn main() -> Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
-    let config_string = read_to_string("/etc/cloudflare-ddns-service/config.toml")
-        .context("couldn't read config file!")?;
+    let config_string =
+        read_to_string("/etc/dyndnsd/config.toml").context("couldn't read config file!")?;
     let config: Config = from_str(&config_string).context("Failed to parse config file")?;
-    let cache_dir = PathBuf::from("/var/cache/cloudflare-ddns-service");
+    let cache_dir = PathBuf::from("/var/cache/dyndnsd");
     let cache_path = cache_dir.join("cache.toml");
     let mut cache = match read_to_string(&cache_path).map(|str| from_str(&str)) {
         Ok(Ok(cache)) => cache,
@@ -60,9 +60,11 @@ async fn main() -> Result<()> {
     };
 
     let mut interval = interval(Duration::new(config.interval, 0));
-    let mut dns_updater =
-        DnsUpdater::new_cloudflare(&config.api_token, Option::<String>::None, None)
-            .context("Failed to initiate cloudflare API client")?;
+    let mut dns_updater: DnsUpdater = config
+        .dns_provider_config
+        .clone()
+        .try_into()
+        .context("Failed to initiate DNS updater")?;
     loop {
         if let Err(error) = update(&config, &mut cache, &cache_path, &mut dns_updater).await {
             log::error!("Failed to update record: {}", error);
