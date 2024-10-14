@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Add hook for automatic changelog generation
 - Clean up and bump dependencies
 - Fix license path in Cargo.toml
+- Bump version to 0.6.0
 
 ### Refactor
 
