@@ -13,12 +13,15 @@ documentation = "https://git.jcg.re/jcgruenhage/cloudflare-ddns-service"
 readme = "README.md"
 
 [dependencies]
-serde = { version = "1.0.152", features = ["derive"] }
-anyhow = "1.0.68"
-env_logger = "0.10.0"
-log = "0.4.17"
-tokio = { version = "1.24.1", features = ["time", "macros", "rt-multi-thread"] }
-serde_yaml = "0.9.16"
-#cloudflare = "0.10.1"
+anyhow = "1"
+cloudflare = "0.10"
+env_logger = "0.11"
+log = "0.4"
+public-ip = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
+tokio = { version = "1", features = ["time", "macros", "rt-multi-thread"] }
+
+[patch.crates-io]
 cloudflare = { git = "https://github.com/jcgruenhage/cloudflare-rs.git", branch = "make-owner-fields-optional" }
-public-ip = "0.2.2"
+public-ip = { git = "https://github.com/jcgruenhage/rust-public-ip.git", branch = "main" }

@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Miscellaneous Tasks
 
 - Add hook for automatic changelog generation
+- Clean up and bump dependencies
 
 ## [0.5.3] - 2023-01-15
 
