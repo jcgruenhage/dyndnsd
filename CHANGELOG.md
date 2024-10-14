@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 
 - Add hook for automatic changelog generation
 - Clean up and bump dependencies
+- Fix license path in Cargo.toml
 
 ### Refactor
 

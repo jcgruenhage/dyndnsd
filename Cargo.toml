@@ -8,7 +8,7 @@ repository = "https://git.jcg.re/jcgruenhage/dyndnsd"
 homepage = "https://git.jcg.re/jcgruenhage/dyndnsd"
 keywords = ["rfc2136", "cloudflare", "ddns"]
 categories = ["command-line-utilities"]
-license-file = "LICENSE"
+license-file = "LICENSE.md"
 documentation = "https://git.jcg.re/jcgruenhage/dyndnsd"
 readme = "README.md"
 
