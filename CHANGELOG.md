@@ -2,7 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.5.4] - 2024-10-14
+## [0.6.0] - 2024-10-14
+
+### Features
+
+- [**breaking**] Use toml for config and cache files
 
 ### Miscellaneous Tasks
 

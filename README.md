@@ -17,18 +17,18 @@ cargo install cloudflare-ddns-service
 ### Config
 
 `cloudflare-ddns-service` expects to find a config file at
-`/etc/cloudflare-ddns-service/config.yml`.
+`/etc/cloudflare-ddns-service/config.toml`.
 
-As you can see from the path, the configuration should be a yaml file. A sample
+As you can see from the path, the configuration should be a toml file. A sample
 could look like this:
 
-```yaml
-api_token: "secretkey"
-zone: "example.com"
-domain: "example.example.com"
-ipv4: true    # defaults to true
-ipv6: true    # defaults to false
-interval: 15  # seconds, defaults to 60
+```toml
+api_token = "secretkey"
+zone = "example.com"
+domain = "example.example.com"
+ipv4 = true    # defaults to true
+ipv6 = true    # defaults to false
+interval = 15  # seconds, defaults to 60
 ```
 
 As you can see, we have a token here. This token needs to have access to at

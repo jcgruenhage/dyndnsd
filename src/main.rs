@@ -14,14 +14,16 @@ mod network;
 use anyhow::{Context, Result};
 use network::{get_record, get_zone, update_record};
 use serde::{Deserialize, Serialize};
-use serde_yaml::{from_str, to_writer};
+use tokio::time::interval;
+use toml::{from_str, to_string};
+
 use std::{
     fs::{create_dir_all, read_to_string, File},
+    io::Write,
     net::{Ipv4Addr, Ipv6Addr},
     path::PathBuf,
     time::Duration,
 };
-use tokio::time::interval;
 
 use cloudflare::{
     endpoints::dns::DnsContent,
@@ -51,11 +53,11 @@ struct Cache {
 async fn main() -> Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
-    let config_string = read_to_string("/etc/cloudflare-ddns-service/config.yaml")
+    let config_string = read_to_string("/etc/cloudflare-ddns-service/config.toml")
         .context("couldn't read config file!")?;
     let config: Config = from_str(&config_string).context("Failed to parse config file")?;
     let cache_dir = PathBuf::from("/var/cache/cloudflare-ddns-service");
-    let cache_path = cache_dir.join("cache.yaml");
+    let cache_path = cache_dir.join("cache.toml");
     let mut cache = match read_to_string(&cache_path).map(|str| from_str(&str)) {
         Ok(Ok(cache)) => cache,
         _ => {
@@ -155,11 +157,12 @@ async fn update(
 }
 
 fn write_cache(cache: &mut Cache, cache_path: &PathBuf) -> Result<()> {
-    to_writer(
-        File::create(cache_path).context("Failed to open cache file for writing")?,
-        cache,
-    )
-    .context("Failed to serialize cache into file")?;
+    let cache_str = to_string(cache).context("Failed to serialize cache file")?;
+    let mut cache_file =
+        File::create(cache_path).context("Failed to open cache file for writing")?;
+    cache_file
+        .write_all(cache_str.as_bytes())
+        .context("Failed to serialize cache into file")?;
     Ok(())
 }
 
