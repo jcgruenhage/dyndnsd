@@ -123,32 +123,32 @@ async fn update(
                 update_required = true;
             }
         }
+    }
 
-        if update_required {
-            dns_updater.delete(&config.domain, &config.zone).await?;
-            for record in records {
-                let cloned_record = match record.1 {
-                    DnsRecord::A { content } => DnsRecord::A { content },
-                    DnsRecord::AAAA { content } => DnsRecord::AAAA { content },
-                    _ => bail!("This code should be unreachable"),
-                };
-                dns_updater
-                    .create(record.0, record.1, record.2, record.3)
-                    .await?;
-                match cloned_record {
-                    DnsRecord::A { content } => {
-                        cache.v4 = Some(content);
-                        write_cache(cache, cache_path)
-                            .context("Failed to write current IPv4 address to cache")?;
-                    }
-                    DnsRecord::AAAA { content } => {
-                        cache.v6 = Some(content);
-                        write_cache(cache, cache_path)
-                            .context("Failed to write current IPv6 address to cache")?;
-                    }
-                    _ => {}
-                };
-            }
+    if update_required {
+        dns_updater.delete(&config.domain, &config.zone).await?;
+        for record in records {
+            let cloned_record = match record.1 {
+                DnsRecord::A { content } => DnsRecord::A { content },
+                DnsRecord::AAAA { content } => DnsRecord::AAAA { content },
+                _ => bail!("This code should be unreachable"),
+            };
+            dns_updater
+                .create(record.0, record.1, record.2, record.3)
+                .await?;
+            match cloned_record {
+                DnsRecord::A { content } => {
+                    cache.v4 = Some(content);
+                    write_cache(cache, cache_path)
+                        .context("Failed to write current IPv4 address to cache")?;
+                }
+                DnsRecord::AAAA { content } => {
+                    cache.v6 = Some(content);
+                    write_cache(cache, cache_path)
+                        .context("Failed to write current IPv6 address to cache")?;
+                }
+                _ => {}
+            };
         }
     }
     Ok(())

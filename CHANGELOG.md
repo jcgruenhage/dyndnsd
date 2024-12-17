@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Bug Fixes
 
 - Talk about "IPv6" in the logs when handling IPv6 instead of "IPv4"
+- Move dns updating outside of IPv6 block
 
 ## [0.6.0] - 2024-10-14
 
