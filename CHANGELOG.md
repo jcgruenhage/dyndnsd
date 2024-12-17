@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Miscellaneous Tasks
 
 - Bump dependencies
+- Bump version to 0.6.1
 
 ## [0.6.0] - 2024-10-14
 
