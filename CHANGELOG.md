@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.1] - 2024-12-17
+
+### Bug Fixes
+
+- Talk about "IPv6" in the logs when handling IPv6 instead of "IPv4"
+
 ## [0.6.0] - 2024-10-14
 
 ### Features

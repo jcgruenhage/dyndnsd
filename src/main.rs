@@ -106,7 +106,7 @@ async fn update(
     if config.ipv6 {
         let current = public_ip::addr_v6()
             .await
-            .context("Failed to query current IPv4 address")?;
+            .context("Failed to query current IPv6 address")?;
         log::debug!("fetched current IP: {}", current.to_string());
         records.push((
             &config.domain,
@@ -144,7 +144,7 @@ async fn update(
                     DnsRecord::AAAA { content } => {
                         cache.v6 = Some(content);
                         write_cache(cache, cache_path)
-                            .context("Failed to write current IPv4 address to cache")?;
+                            .context("Failed to write current IPv6 address to cache")?;
                     }
                     _ => {}
                 };
