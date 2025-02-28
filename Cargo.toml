@@ -1,6 +1,6 @@
 [package]
 name = "dyndnsd"
-version = "0.6.1"
+version = "0.6.2"
 authors = ["Jan Christian Grünhage <jan.christian@gruenhage.xyz>"]
 edition = "2021"
 description = "A daemon for dynamically updating DNS via multiple DNS providers"
