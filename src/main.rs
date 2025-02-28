@@ -9,8 +9,8 @@
 // dyndnsd comes with ABSOLUTELY NO WARRANTY, to the extent permitted by applicable
 // law. See the LICENSE.md for details.
 
-use anyhow::{bail, Context, Result};
-use dns_update::{DnsRecord, DnsUpdater, DnsUpdaterConfig};
+use anyhow::{Context, Result};
+use dns_update::{DnsUpdater, DnsUpdaterConfig, RData};
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 use toml::{from_str, to_string};
@@ -87,12 +87,7 @@ async fn update(
             .await
             .context("Failed to query current IPv4 address")?;
         log::debug!("fetched current IP: {}", current.to_string());
-        records.push((
-            &config.domain,
-            DnsRecord::A { content: current },
-            300,
-            &config.zone,
-        ));
+        records.push((&config.domain, RData::A(current.into()), 300, &config.zone));
         match cache.v4 {
             Some(old) if old == current => {
                 log::debug!("ipv4 unchanged, continuing...");
@@ -110,7 +105,7 @@ async fn update(
         log::debug!("fetched current IP: {}", current.to_string());
         records.push((
             &config.domain,
-            DnsRecord::AAAA { content: current },
+            RData::AAAA(current.into()),
             300,
             &config.zone,
         ));
@@ -128,22 +123,18 @@ async fn update(
     if update_required {
         dns_updater.delete(&config.domain, &config.zone).await?;
         for record in records {
-            let cloned_record = match record.1 {
-                DnsRecord::A { content } => DnsRecord::A { content },
-                DnsRecord::AAAA { content } => DnsRecord::AAAA { content },
-                _ => bail!("This code should be unreachable"),
-            };
+            let rdata = record.1.clone();
             dns_updater
                 .create(record.0, record.1, record.2, record.3)
                 .await?;
-            match cloned_record {
-                DnsRecord::A { content } => {
-                    cache.v4 = Some(content);
+            match rdata {
+                RData::A(content) => {
+                    cache.v4 = Some(content.into());
                     write_cache(cache, cache_path)
                         .context("Failed to write current IPv4 address to cache")?;
                 }
-                DnsRecord::AAAA { content } => {
-                    cache.v6 = Some(content);
+                RData::AAAA(content) => {
+                    cache.v6 = Some(content.into());
                     write_cache(cache, cache_path)
                         .context("Failed to write current IPv6 address to cache")?;
                 }

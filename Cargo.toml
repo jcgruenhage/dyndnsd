@@ -20,10 +20,8 @@ log = "0.4"
 public-ip = "0.2"
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["time", "macros", "rt-multi-thread"] }
-toml = "0.8.19"
+toml = "0.8.20"
 
 [patch.crates-io]
 dns-update = { git = "https://github.com/jcgruenhage/dns-update.git", branch = "fork"}
 public-ip = { git = "https://github.com/jcgruenhage/rust-public-ip.git", branch = "main" }
-hickory-client = { git = "https://github.com/jcgruenhage/hickory-dns.git", branch = "serde_tsig_algorithm_names" }
-hickory-proto = { git = "https://github.com/jcgruenhage/hickory-dns.git", branch = "serde_tsig_algorithm_names" }
