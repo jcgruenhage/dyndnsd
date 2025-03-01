@@ -14,14 +14,16 @@ readme = "README.md"
 
 [dependencies]
 anyhow = "1"
-dns-update = "0.1"
 env_logger = "0.11"
+hickory-client = "0.25"
+hickory-proto = { version = "0.25", features = ["dnssec-aws-lc-rs", "serde"] }
 log = "0.4"
 public-ip = "0.2"
 serde = { version = "1", features = ["derive"] }
+serde_with = { version = "3.12.0", features = ["base64"] }
+thiserror = "2.0.11"
 tokio = { version = "1", features = ["time", "macros", "rt-multi-thread"] }
 toml = "0.8.20"
 
 [patch.crates-io]
-dns-update = { git = "https://github.com/jcgruenhage/dns-update.git", branch = "fork"}
 public-ip = { git = "https://github.com/jcgruenhage/rust-public-ip.git", branch = "main" }

@@ -9,9 +9,13 @@
 // dyndnsd comes with ABSOLUTELY NO WARRANTY, to the extent permitted by applicable
 // law. See the LICENSE.md for details.
 
+mod dns;
+
 use anyhow::{Context, Result};
-use dns_update::{DnsUpdater, DnsUpdaterConfig, RData};
+use dns::Updater;
+use hickory_proto::rr::Name;
 use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, DisplayFromStr};
 use tokio::time::interval;
 use toml::{from_str, to_string};
 
@@ -23,11 +27,16 @@ use std::{
     time::Duration,
 };
 
-#[derive(Serialize, Deserialize)]
+use crate::dns::Config as DnsConfig;
+
+#[serde_as]
+#[derive(Serialize, Deserialize, Debug)]
 struct Config {
-    dns_provider_config: DnsUpdaterConfig,
-    zone: String,
-    domain: String,
+    dns_provider_config: DnsConfig,
+    #[serde_as(as = "DisplayFromStr")]
+    zone: Name,
+    #[serde_as(as = "DisplayFromStr")]
+    domain: Name,
     #[serde(default = "yes")]
     ipv4: bool,
     #[serde(default = "no")]
@@ -60,14 +69,12 @@ async fn main() -> Result<()> {
     };
 
     let mut interval = interval(Duration::new(config.interval, 0));
-    let mut dns_updater: DnsUpdater = config
-        .dns_provider_config
-        .clone()
-        .try_into()
+    let mut updater: Updater = Updater::new(config.dns_provider_config.clone())
+        .await
         .context("Failed to initiate DNS updater")?;
     loop {
-        if let Err(error) = update(&config, &mut cache, &cache_path, &mut dns_updater).await {
-            log::error!("Failed to update record: {}", error);
+        if let Err(error) = update(&config, &mut cache, &cache_path, &mut updater).await {
+            log::error!("Failed to update record: {:#?}", error);
         }
         interval.tick().await;
     }
@@ -77,24 +84,25 @@ async fn update(
     config: &Config,
     cache: &mut Cache,
     cache_path: &PathBuf,
-    dns_updater: &mut DnsUpdater,
+    updater: &mut Updater,
 ) -> Result<()> {
-    let mut records = Vec::new();
-    let mut update_required = false;
-
     if config.ipv4 {
         let current = public_ip::addr_v4()
             .await
             .context("Failed to query current IPv4 address")?;
         log::debug!("fetched current IP: {}", current.to_string());
-        records.push((&config.domain, RData::A(current.into()), 300, &config.zone));
         match cache.v4 {
             Some(old) if old == current => {
                 log::debug!("ipv4 unchanged, continuing...");
             }
             _ => {
                 log::info!("ipv4 changed, setting record");
-                update_required = true;
+                updater
+                    .set_ipv4(current, config.domain.clone(), config.zone.clone())
+                    .await?;
+                cache.v4 = Some(current);
+                write_cache(cache, cache_path)
+                    .context("Failed to write current IPv4 address to cache")?;
             }
         }
     }
@@ -103,43 +111,19 @@ async fn update(
             .await
             .context("Failed to query current IPv6 address")?;
         log::debug!("fetched current IP: {}", current.to_string());
-        records.push((
-            &config.domain,
-            RData::AAAA(current.into()),
-            300,
-            &config.zone,
-        ));
         match cache.v6 {
             Some(old) if old == current => {
                 log::debug!("ipv6 unchanged, continuing...")
             }
             _ => {
                 log::info!("ipv6 changed, setting record");
-                update_required = true;
+                updater
+                    .set_ipv6(current, config.domain.clone(), config.zone.clone())
+                    .await?;
+                cache.v6 = Some(current);
+                write_cache(cache, cache_path)
+                    .context("Failed to write current IPv6 address to cache")?;
             }
-        }
-    }
-
-    if update_required {
-        dns_updater.delete(&config.domain, &config.zone).await?;
-        for record in records {
-            let rdata = record.1.clone();
-            dns_updater
-                .create(record.0, record.1, record.2, record.3)
-                .await?;
-            match rdata {
-                RData::A(content) => {
-                    cache.v4 = Some(content.into());
-                    write_cache(cache, cache_path)
-                        .context("Failed to write current IPv4 address to cache")?;
-                }
-                RData::AAAA(content) => {
-                    cache.v6 = Some(content.into());
-                    write_cache(cache, cache_path)
-                        .context("Failed to write current IPv6 address to cache")?;
-                }
-                _ => {}
-            };
         }
     }
     Ok(())

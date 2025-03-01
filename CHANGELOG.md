@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2025-05-03
+
+### Refactor
+
+- [**breaking**] Move rfc2136 implementation inline, drop cloudflare support
+
 ## [0.6.2] - 2025-02-28
 
 ### Miscellaneous Tasks

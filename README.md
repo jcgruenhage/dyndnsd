@@ -28,29 +28,13 @@ ipv4 = true    # defaults to true
 ipv6 = true    # defaults to false
 interval = 15  # seconds, defaults to 60
 
-# You can use cloudflare
-[dns_provider_config.cloudflare]
-secret = "secretkey"
-
 # Or you can use RFC 2136 with TSIG
-[dns_provider_config.rfc2136]
-addr = "udp://1.2.3.4:53"
+[dns_provider_config]
+url = "udp://1.2.3.4:53"
 key_name = "test"
 key = "test"
 algorithm = "hmac-sha256"
 ```
-
-As you can see, we have a token here. This token needs to have access to at
-least:
- - reading you account zones (for getting the zone ID from the zone name)
- - reading and writing to the DNS zone (for first fetching the records and then
-   modifying them.
-
-Aside of the token, you also have to prepare some DNS records before running
-this: If you enabled IPv4 support, there needs to be a DNS `A` record for the
-configured domain already, and if you enabled IPv6 support, you need a DNS
-`AAAA` record set on the configured domain. The service will not create new
-records, it just modifies existing records.
 
 ### Running
 
@@ -89,5 +73,4 @@ This fork has made major changes to the project, to the extent where most of
 the code has been rewritten and the tool is quite different:
  - Runs as a service instead of in a cron job
  - Supports IPv6
- - Homegrown Cloudflare API client has been replaced with a library which
-   supports multiple providers
+ - Homegrown Cloudflare API client has been replaced with hickory-dns based rfc2136 updates
