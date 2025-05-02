@@ -16,7 +16,7 @@ use hickory_proto::{
     udp::UdpClientStream,
 };
 use serde::{Deserialize, Serialize};
-use serde_with::{base64::Base64, serde_as, DisplayFromStr};
+use serde_with::{DisplayFromStr, base64::Base64, serde_as};
 use thiserror::Error;
 
 #[serde_as]
@@ -108,7 +108,9 @@ impl FromStr for ConnectionUrl {
 
 #[derive(Error, Debug)]
 pub enum ConnectionUrlError {
-    #[error("The DNS connection URL contains an opening bracket indicating an IPv6 literal, but does not contain a closing bracket.")]
+    #[error(
+        "The DNS connection URL contains an opening bracket indicating an IPv6 literal, but does not contain a closing bracket."
+    )]
     MalformedV6,
     #[error("Failure parsing IP address: {0}")]
     IpParsing(#[from] AddrParseError),

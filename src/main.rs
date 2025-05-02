@@ -15,12 +15,12 @@ use anyhow::{Context, Result};
 use dns::Updater;
 use hickory_proto::rr::Name;
 use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, DisplayFromStr};
+use serde_with::{DisplayFromStr, serde_as};
 use tokio::time::interval;
 use toml::{from_str, to_string};
 
 use std::{
-    fs::{create_dir_all, read_to_string, File},
+    fs::{File, create_dir_all, read_to_string},
     io::Write,
     net::{Ipv4Addr, Ipv6Addr},
     path::PathBuf,

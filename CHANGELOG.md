@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - Fix linting issues
 - Update dependencies
+- Update rust edition to 2024
 
 ### Refactor
 
