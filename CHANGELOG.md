@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Miscellaneous Tasks
 
 - Fix linting issues
+- Update dependencies
 
 ### Refactor
 
