@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [0.7.0] - 2025-05-03
 
+### Miscellaneous Tasks
+
+- Fix linting issues
+
 ### Refactor
 
 - [**breaking**] Move rfc2136 implementation inline, drop cloudflare support

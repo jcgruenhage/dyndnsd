@@ -90,7 +90,7 @@ async fn update(
         let current = public_ip::addr_v4()
             .await
             .context("Failed to query current IPv4 address")?;
-        log::debug!("fetched current IP: {}", current.to_string());
+        log::debug!("fetched current IP: {}", current);
         match cache.v4 {
             Some(old) if old == current => {
                 log::debug!("ipv4 unchanged, continuing...");
@@ -110,7 +110,7 @@ async fn update(
         let current = public_ip::addr_v6()
             .await
             .context("Failed to query current IPv6 address")?;
-        log::debug!("fetched current IP: {}", current.to_string());
+        log::debug!("fetched current IP: {}", current);
         match cache.v6 {
             Some(old) if old == current => {
                 log::debug!("ipv6 unchanged, continuing...")
