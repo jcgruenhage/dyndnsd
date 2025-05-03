@@ -1,0 +1,96 @@
+name: Docker build and release
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  prepare:
+    name: 'Prepare container image build'
+    runs-on: 'ubuntu-24.04'
+    outputs:
+      image_repository: ${{ steps.generate_image_repository.outputs.image_repository }}
+    steps:
+      - name: Generate image repository
+        id: generate_image_repository
+        run: echo "image_repository=$(echo ghcr.io/${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: 'Build container image'
+    needs: [prepare]
+    runs-on: ${{ matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    outputs:
+      digest_arm64: ${{ steps.export_digest.outputs.digest_arm64 }}
+      digest_amd64: ${{ steps.export_digest.outputs.digest_amd64 }}
+    strategy:
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: "${{ needs.prepare.outputs.image_repository }}"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,name=${{ needs.prepare.outputs.image_repository }},push-by-digest=true,name-canonical=true,push=true
+
+      - name: Export digest
+        id: export_digest
+        run: |
+          arch="$(echo -n ${{ matrix.platform }} | sed -e 's/linux\///')"
+          digest="${{ steps.build.outputs.digest }}"
+          echo "digest_${arch}=${digest#sha256:}" >> "$GITHUB_OUTPUT"
+
+  merge:
+    runs-on: "ubuntu-24.04"
+    needs: [prepare, build]
+    steps:
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ needs.prepare.outputs.image_repository }}
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create manifest list and push
+        run: |
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            ${{ needs.prepare.outputs.image_repository }}@sha256:${{ needs.build.outputs.digest_arm64 }} \
+            ${{ needs.prepare.outputs.image_repository }}@sha256:${{ needs.build.outputs.digest_amd64 }}
+
+      - name: Inspect image
+        run: docker buildx imagetools inspect ${{ needs.prepare.outputs.image_repository }}:${{ steps.meta.outputs.version }}

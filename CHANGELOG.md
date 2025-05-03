@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [0.7.0] - 2025-05-03
 
+### Features
+
+- Add GHA workflow for building container image
+
 ### Miscellaneous Tasks
 
 - Fix linting issues
