@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.1] - 2025-06-02
+
+### Bug Fixes
+
+- Use fresh DNS client for each operation
+
+### Documentation
+
+- Remove cloudflare from keywords in Cargo manifest
+
+### Miscellaneous Tasks
+
+- Bump dependencies
+- Bump version to 0.7.1 and update changelog
+
 ## [0.7.0] - 2025-05-03
 
 ### Features
