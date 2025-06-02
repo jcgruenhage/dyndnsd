@@ -12,7 +12,6 @@
 mod dns;
 
 use anyhow::{Context, Result};
-use dns::Updater;
 use hickory_proto::rr::Name;
 use serde::{Deserialize, Serialize};
 use serde_with::{DisplayFromStr, serde_as};
@@ -69,23 +68,15 @@ async fn main() -> Result<()> {
     };
 
     let mut interval = interval(Duration::new(config.interval, 0));
-    let mut updater: Updater = Updater::new(config.dns_provider_config.clone())
-        .await
-        .context("Failed to initiate DNS updater")?;
     loop {
-        if let Err(error) = update(&config, &mut cache, &cache_path, &mut updater).await {
+        if let Err(error) = update(&config, &mut cache, &cache_path).await {
             log::error!("Failed to update record: {:#?}", error);
         }
         interval.tick().await;
     }
 }
 
-async fn update(
-    config: &Config,
-    cache: &mut Cache,
-    cache_path: &PathBuf,
-    updater: &mut Updater,
-) -> Result<()> {
+async fn update(config: &Config, cache: &mut Cache, cache_path: &PathBuf) -> Result<()> {
     if config.ipv4 {
         let current = public_ip::addr_v4()
             .await
@@ -97,7 +88,8 @@ async fn update(
             }
             _ => {
                 log::info!("ipv4 changed, setting record");
-                updater
+                config
+                    .dns_provider_config
                     .set_ipv4(current, config.domain.clone(), config.zone.clone())
                     .await?;
                 cache.v4 = Some(current);
@@ -117,7 +109,8 @@ async fn update(
             }
             _ => {
                 log::info!("ipv6 changed, setting record");
-                updater
+                config
+                    .dns_provider_config
                     .set_ipv6(current, config.domain.clone(), config.zone.clone())
                     .await?;
                 cache.v6 = Some(current);

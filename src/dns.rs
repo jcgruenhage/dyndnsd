@@ -118,17 +118,18 @@ pub enum ConnectionUrlError {
     PortParsing(#[from] ParseIntError),
 }
 
-pub struct Updater {
-    client: Client,
-}
-
-impl Updater {
-    pub async fn new(config: Config) -> anyhow::Result<Self> {
-        let signer = TSigner::new(config.key, config.algorithm, config.key_name, 60)?;
-        let client = match config.url.scheme {
+impl Config {
+    async fn client(&self) -> anyhow::Result<Client> {
+        let signer = TSigner::new(
+            self.key.clone(),
+            self.algorithm.clone(),
+            self.key_name.clone(),
+            60,
+        )?;
+        let client = match self.url.scheme {
             ConnectionScheme::Udp => {
                 let conn =
-                    UdpClientStream::builder(config.url.address, TokioRuntimeProvider::default())
+                    UdpClientStream::builder(self.url.address, TokioRuntimeProvider::default())
                         .with_signer(Some(Arc::new(signer)))
                         .build();
                 let (client, bg) = Client::connect(conn).await?;
@@ -137,7 +138,7 @@ impl Updater {
             }
             ConnectionScheme::Tcp => {
                 let (stream, sender) = TcpClientStream::new(
-                    config.url.address,
+                    self.url.address,
                     None,
                     None,
                     TokioRuntimeProvider::default(),
@@ -147,41 +148,33 @@ impl Updater {
                 client
             }
         };
-        Ok(Self { client })
+        Ok(client)
     }
 
-    async fn replace(&mut self, rdata: RData, name: Name, origin: Name) -> anyhow::Result<()> {
-        self.client
+    async fn replace(&self, rdata: RData, name: Name, origin: Name) -> anyhow::Result<()> {
+        self.client()
+            .await?
             .delete_rrset(
                 Record::update0(name.clone(), 0, rdata.record_type()),
                 origin.clone(),
             )
             .await
             .context("Failed to delete old record")?;
-        self.client
+        self.client()
+            .await?
             .create(Record::from_rdata(name, 60, rdata), origin)
             .await
             .context("Failed to set new record")?;
         Ok(())
     }
 
-    pub async fn set_ipv4(
-        &mut self,
-        addr: Ipv4Addr,
-        name: Name,
-        origin: Name,
-    ) -> anyhow::Result<()> {
+    pub async fn set_ipv4(&self, addr: Ipv4Addr, name: Name, origin: Name) -> anyhow::Result<()> {
         self.replace(RData::A(addr.into()), name, origin)
             .await
             .context("Failed to replace A record")
     }
 
-    pub async fn set_ipv6(
-        &mut self,
-        addr: Ipv6Addr,
-        name: Name,
-        origin: Name,
-    ) -> anyhow::Result<()> {
+    pub async fn set_ipv6(&self, addr: Ipv6Addr, name: Name, origin: Name) -> anyhow::Result<()> {
         self.replace(RData::AAAA(addr.into()), name, origin)
             .await
             .context("Failed to replace AAAA record")
